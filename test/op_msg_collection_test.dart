@@ -1,12 +1,14 @@
 @Timeout(Duration(seconds: 100))
+library;
 
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:mongo_dart/src/database/commands/administration_commands/create_command/create_command.dart';
 import 'package:mongo_dart/src/database/commands/administration_commands/create_command/create_options.dart';
 import 'package:decimal/decimal.dart';
 import 'package:test/test.dart';
+import 'package:uuid/uuid.dart';
 
-const dbName = 'test-mongo-dart';
+const dbName = 'test-mongo-dart-msg';
 const dbAddress = '127.0.0.1';
 
 const defaultUri = 'mongodb://$dbAddress:27017/$dbName';

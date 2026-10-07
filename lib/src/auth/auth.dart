@@ -5,9 +5,10 @@ import 'package:sasl_scram/sasl_scram.dart' show UsernamePasswordCredential;
 import 'mongodb_cr_authenticator.dart';
 import 'scram_sha1_authenticator.dart';
 import 'scram_sha256_authenticator.dart';
+import 'x509_authenticator.dart';
 
 // ignore: constant_identifier_names
-enum AuthenticationScheme { MONGODB_CR, SCRAM_SHA_1, SCRAM_SHA_256 }
+enum AuthenticationScheme { MONGODB_CR, SCRAM_SHA_1, SCRAM_SHA_256, X509 }
 
 abstract class Authenticator {
   Authenticator();
@@ -21,6 +22,9 @@ abstract class Authenticator {
         return ScramSha1Authenticator(credentials, db);
       case AuthenticationScheme.SCRAM_SHA_256:
         return ScramSha256Authenticator(credentials, db);
+      case AuthenticationScheme.X509:
+        return X509Authenticator(credentials.username, db);
+      // ignore: unreachable_switch_default
       default:
         throw MongoDartError("Authenticator wasn't specified");
     }

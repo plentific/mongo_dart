@@ -1,4 +1,4 @@
-part of mongo_dart;
+part of '../../mongo_dart.dart';
 
 class ServerConfig {
   String host;
@@ -13,6 +13,9 @@ class ServerConfig {
   String? password;
 
   bool isAuthenticated = false;
+  ClientMetadata? clientMetadata;
+  bool loadBalanced;
+  bool safeAtlas;
 
   ServerConfig(
       {this.host = '127.0.0.1',
@@ -21,7 +24,10 @@ class ServerConfig {
       bool? tlsAllowInvalidCertificates,
       this.tlsCAFileContent,
       this.tlsCertificateKeyFileContent,
-      this.tlsCertificateKeyFilePassword})
+      this.tlsCertificateKeyFilePassword,
+      this.clientMetadata,
+      this.loadBalanced = false,
+      this.safeAtlas = false})
       : isSecure = isSecure ?? false,
         tlsAllowInvalidCertificates = tlsAllowInvalidCertificates ?? false;
   String get hostUrl => '$host:${port.toString()}';

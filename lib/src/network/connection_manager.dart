@@ -1,4 +1,4 @@
-part of mongo_dart;
+part of '../../mongo_dart.dart';
 
 class ConnectionManager {
   final _log = Logger('ConnectionManager');
@@ -22,18 +22,24 @@ class ConnectionManager {
 
   Future _connect(Connection connection) async {
     await connection.connect();
-    var result = <String, Object?>{keyOk: 0.0};
+    var result = <String, dynamic>{keyOk: 0.0};
     // As I couldn't set-up a pre 3.6 environment, I check not only for
     // a {ok: 0.0} but also for any other error
     try {
       var helloCommand = HelloCommand(db,
-          username: connection.serverConfig.userName, connection: connection);
+          username: connection.serverConfig.userName,
+          clientMetadata: connection.serverConfig.clientMetadata,
+          connection: connection);
       result = await helloCommand.execute(skipStateCheck: true);
     } catch (error) {
       //Do nothing
     }
     if (result[keyOk] == 1.0) {
       var resultDoc = HelloResult(result);
+      if (connection.serverConfig.loadBalanced == true &&
+          !resultDoc.isLoadBalanced) {
+        throw MongoDartError('The server is not in Load Balanced mode');
+      }
       var master = resultDoc.isWritablePrimary;
       connection.isMaster = master;
       if (master) {
@@ -55,7 +61,7 @@ class ConnectionManager {
       if (connection._closed) {
         connection._closed = false;
         await connection.connect();
-        result = <String, Object?>{keyOk: 0.0};
+        result = <String, dynamic>{keyOk: 0.0};
       }
       var isMasterCommand = DbCommand.createIsMasterCommand(db);
       var replyMessage = await connection.query(isMasterCommand);
@@ -90,12 +96,13 @@ class ConnectionManager {
         db._authenticationScheme = AuthenticationScheme.MONGODB_CR;
       }
     }
-    if (connection.serverConfig.userName == null) {
+    if (connection.serverConfig.userName == null &&
+        db._authenticationScheme != AuthenticationScheme.X509) {
       _log.fine(() => '$db: ${connection.serverConfig.hostUrl} connected');
     } else {
       try {
-        await db.authenticate(connection.serverConfig.userName!,
-            connection.serverConfig.password ?? '',
+        await db.authenticate(
+            connection.serverConfig.userName, connection.serverConfig.password,
             connection: connection);
         _log.fine(() => '$db: ${connection.serverConfig.hostUrl} connected');
       } catch (e) {
@@ -199,5 +206,24 @@ class ConnectionManager {
       _masterConnection = null;
     }
     return _connectionPool.remove(connection.serverConfig.hostUrl);
+  }
+
+  Connection? getMasterConnectionIfAvailable() {
+    final master = _masterConnection;
+    if (master != null && master.connected) {
+      return master;
+    }
+    return null;
+  }
+
+  Connection? getSecondaryConnection() {
+    final secondaries = _connectionPool.values
+        .where((c) => !c.isMaster && c.connected)
+        .toList()
+      ..shuffle();
+    if (secondaries.isEmpty) {
+      return null;
+    }
+    return secondaries.first;
   }
 }

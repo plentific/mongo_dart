@@ -1,4 +1,4 @@
-library mongo_dart_query_test;
+library;
 
 import 'package:test/test.dart';
 import 'package:bson/bson.dart';
@@ -238,8 +238,7 @@ void testGetQueryString() {
   expect(selector.getQueryString(), r'{"$query":{"foo":{"$lt":2}}}');
   var id = ObjectId();
   selector = where.id(id);
-  expect(
-      selector.getQueryString(), '{"\$query":{"_id":"${id.toHexString()}"}}');
+  expect(selector.getQueryString(), '{"\$query":{"_id":"${id.oid}"}}');
 //  var dbPointer = new DbRef('Dummy',id);
 //  selector = where.eq('foo',dbPointer);
 //  expect(selector.getQueryString(),'{"\$query":{"foo":$dbPointer}}');

@@ -2,10 +2,11 @@ import 'package:mongo_dart/mongo_dart.dart';
 import 'package:mongo_dart/src/database/message/mongo_modern_message.dart';
 import 'package:mongo_dart/src/database/commands/query_and_write_operation_commands/return_classes/abstract_write_result.dart';
 import 'package:test/test.dart';
+import 'package:uuid/uuid.dart';
 
 import 'utils/insert_data.dart';
 
-const dbName = 'test-mongo-dart';
+const dbName = 'test-mongo-dart-bulk';
 const dbAddress = '127.0.0.1';
 
 const defaultUri = 'mongodb://$dbAddress:27017/$dbName';
@@ -185,7 +186,7 @@ void main() async {
         // Todo check ids and documents
         //expect(ret.ids.first, 2);
         //expect(ret.documents.first['name'], 'Stephen');
-      }, skip: cannotRunTests);
+      });
 
       test('Unordered Bulk', () async {
         if (cannotRunTests) {
@@ -227,7 +228,7 @@ void main() async {
         // Todo check ids and documents
         //expect(ret.ids.first, 2);
         //expect(ret.documents.first['name'], 'Stephen');
-      }, skip: cannotRunTests);
+      });
       test('Unordered Bulk - extra limit', () async {
         if (cannotRunTests) {
           return;
@@ -301,7 +302,7 @@ void main() async {
         // Todo check ids and documents
         //expect(ret.ids.first, 2);
         //expect(ret.documents.first['name'], 'Stephen');
-      }, skip: cannotRunTests);
+      });
       test('Unordered Bulk - collection helper', () async {
         if (cannotRunTests) {
           return;
@@ -348,7 +349,7 @@ void main() async {
         // Todo check ids and documents
         //expect(ret.ids.first, 2);
         //expect(ret.documents.first['name'], 'Stephen');
-      }, skip: cannotRunTests);
+      });
       test('Ordered Bulk', () async {
         if (cannotRunTests) {
           return;
@@ -382,7 +383,7 @@ void main() async {
         // Todo check ids and documents
         //expect(ret.ids.first, 2);
         //expect(ret.documents.first['name'], 'Stephen');
-      }, skip: cannotRunTests);
+      });
     });
 
     group('Bulk update', () {
@@ -431,7 +432,7 @@ void main() async {
         // Todo check ids and documents
         //expect(ret.ids.first, 2);
         //expect(ret.documents.first['name'], 'Stephen');
-      }, skip: cannotRunTests);
+      });
       test('Ordered Bulk', () async {
         if (cannotRunTests) {
           return;
@@ -476,7 +477,7 @@ void main() async {
         // Todo check ids and documents
         //expect(ret.ids.first, 2);
         //expect(ret.documents.first['name'], 'Stephen');
-      }, skip: cannotRunTests);
+      });
       test('Ordered Bulk - collection helper', () async {
         if (cannotRunTests) {
           return;
@@ -551,7 +552,7 @@ void main() async {
         // Todo check ids and documents
         //expect(ret.ids.first, 2);
         //expect(ret.documents.first['name'], 'Stephen');
-      }, skip: cannotRunTests);
+      });
     });
 
     group('Mixed functions', () {
@@ -594,7 +595,7 @@ void main() async {
         expect(findResult.length, 3);
         expect(findResult.first['name'], 'John');
         expect(findResult.last['name'], 'Mandy');
-      }, skip: cannotRunTests);
+      });
 
       test(
           'Ordered Bulk - Insert, delete one and delete many '
@@ -658,7 +659,7 @@ void main() async {
         expect(findResult.length, 2);
         expect(findResult.first['name'], 'Mira');
         expect(findResult.last['name'], 'Mandy');
-      }, skip: cannotRunTests);
+      });
 
       test('Ordered Bulk - Insert, delete one and delete many', () async {
         if (cannotRunTests) {
@@ -701,7 +702,7 @@ void main() async {
         expect(findResult.length, 2);
         expect(findResult.first['name'], 'Mira');
         expect(findResult.last['name'], 'Mandy');
-      }, skip: cannotRunTests);
+      });
       test('Ordered Bulk - "One" method types', () async {
         if (cannotRunTests) {
           return;
@@ -778,7 +779,7 @@ void main() async {
         expect(findResult.first['char'], 'Eldon');
         expect(findResult[1]['char'], 'Tanys');
         expect(findResult.last['char'], 'Taeln');
-      }, skip: cannotRunTests);
+      });
       test('Ordered Bulk - "One" method types - with error', () async {
         if (cannotRunTests) {
           return;
@@ -858,7 +859,7 @@ void main() async {
         expect(findResult.first['char'], 'Brisbane');
         expect(findResult[1]['char'], 'Eldon');
         expect(findResult.last['char'], 'Dithras');
-      }, skip: cannotRunTests);
+      });
 
       test('Ordered Bulk - "All" method types', () async {
         if (cannotRunTests) {
@@ -940,7 +941,7 @@ void main() async {
         expect(findResult.first['char'], 'Eldon');
         expect(findResult[1]['char'], 'Tanys');
         expect(findResult.last['char'], 'Taeln');
-      }, skip: cannotRunTests);
+      });
 
       test('Ordered Bulk - "All" method types fromMap', () async {
         if (cannotRunTests) {
@@ -999,7 +1000,7 @@ void main() async {
         expect(findResult.first['char'], 'Eldon');
         expect(findResult[1]['char'], 'Tanys');
         expect(findResult.last['char'], 'Taeln');
-      }, skip: cannotRunTests);
+      });
 
       test('Ordered Bulk - "One" method types - with error - 2', () async {
         if (cannotRunTests) {
@@ -1085,7 +1086,7 @@ void main() async {
         expect(findResult.first['char'], 'Eldon');
         expect(findResult[1]['char'], 'Tanys');
         expect(findResult.last['char'], 'Taeln');
-      }, skip: cannotRunTests);
+      });
       test('Unordered Bulk - "One" method types - with error', () async {
         if (cannotRunTests) {
           return;
@@ -1165,7 +1166,7 @@ void main() async {
         expect(findResult.first['char'], 'Eldon');
         expect(findResult[1]['char'], 'Tanys');
         expect(findResult.last['char'], 'Dithras');
-      }, skip: cannotRunTests);
+      });
 
       test('Unordered Bulk - "One" method types - with error - 2', () async {
         if (cannotRunTests) {
@@ -1251,7 +1252,7 @@ void main() async {
         expect(findResult.first['char'], 'Eldon');
         expect(findResult[1]['char'], 'Tanys');
         expect(findResult.last['char'], 'Taeln');
-      }, skip: cannotRunTests);
+      });
       test('Unordered Bulk - "One" method types', () async {
         if (cannotRunTests) {
           return;
@@ -1329,7 +1330,7 @@ void main() async {
         expect(findResult.first['char'], 'Eldon');
         expect(findResult[1]['char'], 'Tanys');
         expect(findResult.last['char'], 'Dithras');
-      }, skip: cannotRunTests);
+      });
 
       test('Ordered Bulk Write with Write Concern', () async {
         if (cannotRunTests) {
@@ -1418,7 +1419,7 @@ void main() async {
           expect(findResult[1]['char'], 'ogre');
           expect(findResult.last['char'], 'ogrekin');
         }
-      }, skip: cannotRunTests);
+      });
       test('Unordered Bulk Write with Write Concern', () async {
         if (cannotRunTests) {
           return;
@@ -1506,7 +1507,7 @@ void main() async {
           expect(findResult[1]['char'], 'ogre');
           expect(findResult.last['char'], 'ogrekin');
         }
-      }, skip: cannotRunTests);
+      });
     });
   });
   tearDownAll(() async {

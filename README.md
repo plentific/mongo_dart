@@ -272,6 +272,14 @@ When you use the `mongodb+srv` url schema, the "tls" (or "ssl") parameter is imp
 
 You can also use certificates for tls handshake [see this tutorial][19] for more info.
 
+### Authentication
+
+The driver supports three authentication methods:
+
+- SCRAM_SHA_1
+- SCRAM_SHA_256
+- X509. See [here][20] for more details.
+
 ### Atlas (MongoDb cloud service) connection
 
 Atlas requires a tls connection, so now it is possible to connect to this cloud service.
@@ -372,4 +380,5 @@ Last but not least, some commands:
 [16]: https://github.com/mongo-dart/mongo_dart/blob/main/example/manual/bulk/unordered_bulk.dart
 [17]: https://github.com/mongo-dart/mongo_dart/blob/main/example/manual/watch/watch_on_collection.dart
 [18]: https://github.com/mongo-dart/mongo_dart/blob/main/example/manual/watch/watch_on_collection_insert.dart
-[19]: https://github.com/mongo-dart/mongo_dart/blob/main/doc/manual/connection/simple_connection_no_auth.md
+[19]:  https://github.com/mongo-dart/mongo_dart/blob/main/doc/manual/connection/tls_connection_no_auth_client_certificate.md
+[20]: https://github.com/mongo-dart/mongo_dart/blob/main/doc/manual/connection/x509_authentication.md

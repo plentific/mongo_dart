@@ -1,4 +1,4 @@
-part of mongo_dart;
+part of '../../mongo_dart.dart';
 
 /// [WriteConcern] control the acknowledgment of write operations with various paramaters.
 class WriteConcern {
@@ -191,6 +191,9 @@ class _UriParameters {
   static const tlsCAFile = 'tlsCAFile';
   static const tlsCertificateKeyFile = 'tlsCertificateKeyFile';
   static const tlsCertificateKeyFilePassword = 'tlsCertificateKeyFilePassword';
+  static const appName = 'appname';
+  static const loadBalanced = 'loadBalanced';
+  static const safeAtlas = 'safeAtlas';
 }
 
 class Db {
@@ -281,6 +284,23 @@ class Db {
   Connection get masterConnection => _masterConnectionVerified;
   Connection get masterConnectionAnyState => _masterConnectionVerifiedAnyState;
 
+  Connection? connectionForReadPreference(ReadPreference readPreference) {
+    final manager = _connectionManager;
+    switch (readPreference.mode) {
+      case ReadPreferenceMode.primary:
+        return _masterConnectionVerifiedAnyState;
+      case ReadPreferenceMode.primaryPreferred:
+        return manager?.getMasterConnectionIfAvailable() ??
+            manager?.getSecondaryConnection();
+      case ReadPreferenceMode.secondary:
+        return manager?.getSecondaryConnection();
+      case ReadPreferenceMode.secondaryPreferred:
+      case ReadPreferenceMode.nearest:
+        return manager?.getSecondaryConnection() ??
+            manager?.getMasterConnectionIfAvailable();
+    }
+  }
+
   List<String> get uriList => _uriList.toList();
 
   Future<ServerConfig> _parseUri(String uriString,
@@ -297,6 +317,9 @@ class Db {
       isSecure = true;
     }
     var uri = Uri.parse(uriString);
+    var appName = 'mongodb_dart application';
+    var loadBalanced = false;
+    var safeAtlas = false;
 
     if (uri.scheme != 'mongodb') {
       throw MongoDartError('Invalid scheme in uri: $uriString ${uri.scheme}');
@@ -334,6 +357,15 @@ class Db {
           value.isNotEmpty) {
         tlsCertificateKeyFilePassword = value;
       }
+      if (queryParam == _UriParameters.appName && value.isNotEmpty) {
+        appName = value;
+      }
+      if (queryParam == _UriParameters.loadBalanced && value == 'true') {
+        loadBalanced = true;
+      }
+      if (queryParam == _UriParameters.safeAtlas && value == 'true') {
+        safeAtlas = true;
+      }
     });
 
     Uint8List? tlsCAFileContent;
@@ -350,6 +382,7 @@ class Db {
       throw MongoDartError('Missing tlsCertificateKeyFile parameter');
     }
 
+    var clientMetadata = ClientMetadata(ApplicationMetadata(appName));
     var serverConfig = ServerConfig(
         host: uri.host,
         port: uri.port,
@@ -357,7 +390,10 @@ class Db {
         tlsAllowInvalidCertificates: tlsAllowInvalidCertificates,
         tlsCAFileContent: tlsCAFileContent,
         tlsCertificateKeyFileContent: tlsCertificateKeyFileContent,
-        tlsCertificateKeyFilePassword: tlsCertificateKeyFilePassword);
+        tlsCertificateKeyFilePassword: tlsCertificateKeyFilePassword,
+        clientMetadata: clientMetadata,
+        loadBalanced: loadBalanced,
+        safeAtlas: safeAtlas);
 
     if (serverConfig.port == 0) {
       serverConfig.port = mongoDefaultPort;
@@ -392,6 +428,9 @@ class Db {
       _authenticationScheme = AuthenticationScheme.SCRAM_SHA_256;
     } else if (authenticationSchemeName == MongoDbCRAuthenticator.name) {
       _authenticationScheme = AuthenticationScheme.MONGODB_CR;
+    } else if (authenticationSchemeName == X509Authenticator.name) {
+      _authenticationScheme = AuthenticationScheme.X509;
+      authSourceDb = Db._authDb(r'$external');
     } else {
       throw MongoDartError('Provided authentication scheme is '
           'not supported : $authenticationSchemeName');
@@ -429,7 +468,7 @@ class Db {
     connection.execute(message, writeConcern == WriteConcern.ERRORS_IGNORED);
   }
 
-  Future<Map<String, Object?>> executeModernMessage(MongoModernMessage message,
+  Future<Map<String, dynamic>> executeModernMessage(MongoModernMessage message,
       {Connection? connection, bool skipStateCheck = false}) async {
     if (skipStateCheck) {
       if (!_masterConnectionVerifiedAnyState.serverCapabilities.supportsOpMsg) {
@@ -533,7 +572,7 @@ class Db {
     //return result.future;
   }
 
-  bool documentIsNotAnError(firstRepliedDocument) =>
+  bool documentIsNotAnError(dynamic firstRepliedDocument) =>
       firstRepliedDocument['ok'] == 1.0 && firstRepliedDocument['err'] == null;
 
   Future<bool> dropCollection(String collectionName) async {
@@ -623,8 +662,14 @@ class Db {
 
   /// Analogue to shell's `show dbs`. Helper for `listDatabases` mongodb command.
   Future<List> listDatabases() async {
-    var commandResult = await executeDbCommand(
-        DbCommand.createQueryAdminCommand({'listDatabases': 1}));
+    Map<String, dynamic> commandResult;
+    if (masterConnection.serverCapabilities.supportsOpMsg) {
+      commandResult =
+          await DbAdminCommandOperation(this, {'listDatabases': 1}).execute();
+    } else {
+      commandResult = await executeDbCommand(
+          DbCommand.createQueryAdminCommand({'listDatabases': 1}));
+    }
 
     var result = [];
 
@@ -721,14 +766,32 @@ class Db {
         .toList();
   }
 
-  Future<bool> authenticate(String userName, String password,
-      {Connection? connection}) async {
+  /// Method for authentication with X509 certificate.
+  /// In the conection parameters you have not to set
+  /// X509 if you want to use this delayed auth function.
+  Future<bool> authenticateX509({Connection? connection}) async =>
+      authenticate(null, null,
+          connection: connection,
+          authScheme: AuthenticationScheme.X509,
+          authDb: r'$external');
+
+  Future<bool> authenticate(String? userName, String? password,
+      {Connection? connection,
+      AuthenticationScheme? authScheme,
+      String? authDb}) async {
     var credential = UsernamePasswordCredential()
       ..username = userName
       ..password = password;
 
     (connection ?? masterConnection).serverConfig.userName ??= userName;
     (connection ?? masterConnection).serverConfig.password ??= password;
+
+    if (authScheme != null) {
+      _authenticationScheme = authScheme;
+    }
+    if (authDb != null) {
+      authSourceDb = Db._authDb(authDb);
+    }
 
     if (_authenticationScheme == null) {
       throw MongoDartError('Authentication scheme not specified');
@@ -892,7 +955,7 @@ class Db {
   // ***********************************************************
 
   /// This method drops the current DB
-  Future<Map<String, Object?>> modernDropDatabase(
+  Future<Map<String, dynamic>> modernDropDatabase(
       {DropDatabaseOptions? dropOptions,
       Map<String, Object>? rawOptions}) async {
     var command = DropDatabaseCommand(this,
@@ -904,7 +967,7 @@ class Db {
   /// connection.
   ///
   /// Only works from version 3.6
-  Future<Map<String, Object?>> serverStatus(
+  Future<Map<String, dynamic>> serverStatus(
       {Map<String, Object>? options}) async {
     if (!masterConnection.serverCapabilities.supportsOpMsg) {
       return <String, Object>{};
@@ -915,7 +978,7 @@ class Db {
   }
 
   /// This method explicitly creates a collection
-  Future<Map<String, Object?>> createCollection(String name,
+  Future<Map<String, dynamic>> createCollection(String name,
       {CreateCollectionOptions? createCollectionOptions,
       Map<String, Object>? rawOptions}) async {
     var command = CreateCollectionCommand(this, name,
@@ -929,7 +992,7 @@ class Db {
   ///
   Stream<Map<String, dynamic>> modernListCollections(
       {SelectorBuilder? selector,
-      Map<String, Object?>? filter,
+      Map<String, dynamic>? filter,
       ListCollectionsOptions? findOptions,
       Map<String, Object>? rawOptions}) {
     var command = ListCollectionsCommand(this,
@@ -942,7 +1005,7 @@ class Db {
   }
 
   /// This method creates a view
-  Future<Map<String, Object?>> createView(
+  Future<Map<String, dynamic>> createView(
       String view, String source, List pipeline,
       {CreateViewOptions? createViewOptions,
       Map<String, Object>? rawOptions}) async {
@@ -952,7 +1015,7 @@ class Db {
   }
 
   /// This method drops a collection
-  Future<Map<String, Object?>> modernDrop(String collectionNAme,
+  Future<Map<String, dynamic>> modernDrop(String collectionNAme,
       {DropOptions? dropOptions, Map<String, Object>? rawOptions}) async {
     var command = DropCommand(this, collectionNAme,
         dropOptions: dropOptions, rawOptions: rawOptions);
@@ -985,9 +1048,9 @@ class Db {
   }
 
   /// Runs a command
-  Future<Map<String, Object?>> runCommand(Map<String, Object>? command) =>
+  Future<Map<String, dynamic>> runCommand(Map<String, Object>? command) =>
       CommandOperation(this, <String, Object>{}, command: command).execute();
 
   /// Ping command
-  Future<Map<String, Object?>> pingCommand() => PingCommand(this).execute();
+  Future<Map<String, dynamic>> pingCommand() => PingCommand(this).execute();
 }

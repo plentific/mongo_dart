@@ -2,7 +2,7 @@
 /// As most of IO in Dart, mongo_dart is totally async -using Futures and Streams.
 /// .
 
-library mongo_dart;
+library;
 
 import 'dart:async';
 import 'dart:collection';
@@ -21,7 +21,14 @@ import 'dart:io'
         TlsException;
 
 import 'package:bson/bson.dart';
+// ignore: implementation_imports
+import 'package:bson/src/types/bson_map.dart';
+// ignore: implementation_imports
+import 'package:bson/src/types/bson_string.dart';
+import 'package:fixnum/fixnum.dart';
 import 'package:logging/logging.dart';
+import 'package:mongo_dart/src/database/commands/replication_commands/hello_command/client_metadata.dart';
+import 'package:uuid/uuid.dart';
 import 'package:mongo_dart/src/auth/scram_sha256_authenticator.dart';
 import 'package:mongo_dart/src/database/cursor/modern_cursor.dart';
 import 'package:mongo_dart/src/database/info/server_status.dart';
@@ -53,6 +60,7 @@ import 'package:mongo_dart/src/auth/mongodb_cr_authenticator.dart'
 import 'package:sasl_scram/sasl_scram.dart' show UsernamePasswordCredential;
 import 'package:vy_string_utils/vy_string_utils.dart';
 
+import 'src/auth/x509_authenticator.dart';
 import 'src/database/commands/administration_commands/drop_command/drop_command.dart';
 import 'src/database/commands/administration_commands/drop_command/drop_options.dart';
 import 'src/database/commands/administration_commands/drop_database_command/drop_database_command.dart';
@@ -63,10 +71,12 @@ import 'src/database/commands/administration_commands/list_collections_command/l
 import 'src/database/commands/administration_commands/list_collections_command/list_collections_options.dart';
 import 'src/database/commands/administration_commands/listt_indexes_command/list_indexes_command.dart';
 import 'src/database/commands/administration_commands/listt_indexes_command/list_indexes_options.dart';
+import 'src/database/commands/aggregation_commands/aggregate/return_classes/change_event.dart';
 import 'src/database/commands/aggregation_commands/count/count_operation.dart';
 import 'src/database/commands/aggregation_commands/count/count_options.dart';
 import 'src/database/commands/aggregation_commands/count/count_result.dart';
 import 'src/database/commands/base/command_operation.dart';
+import 'src/database/commands/base/db_admin_command_operation.dart';
 import 'src/database/commands/diagnostic_commands/ping_command/ping_command.dart';
 import 'package:path/path.dart' as p;
 

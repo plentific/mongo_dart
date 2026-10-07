@@ -40,6 +40,24 @@ void main() async {
       .forEach((v) => print(v));
   print(
       "Filtered by (my_field gt 995 or my_field lt 10) and str_field like '99' ");
+  print('---');
+  await coll
+      .find(where
+          .gt('my_field', 995)
+          .or(where.lt('my_field', 10))
+          .and(where.match('str_field', 'Str', caseInsensitive: false)))
+      .forEach((v) => print(v));
+  print(
+      "Filtered by (my_field gt 995 or my_field lt 10) and str_field like 'Str' caseInsensitive false");
+  print('---');
+  await coll
+      .find(where
+          .gt('my_field', 995)
+          .or(where.lt('my_field', 10))
+          .and(where.match('str_field', 'Str', caseInsensitive: true)))
+      .forEach((v) => print(v));
+  print(
+      "Filtered by (my_field gt 995 or my_field lt 10) and str_field like 'Str' caseInsensitive true");
   await coll
       .find(where
           .inRange('my_field', 700, 703, minInclude: false)
@@ -69,7 +87,7 @@ void main() async {
   await coll
       .find(where.jsQuery('this.my_field % 100 == 35'))
       .forEach((v) => print(v));
-  var count = await coll.legacyCount(where.gt('my_field', 995));
+  var count = await coll.count(where.gt('my_field', 995));
   print('Count of records with my_field > 995: $count');
   var databases = await db.listDatabases();
   print('List of databases: $databases');

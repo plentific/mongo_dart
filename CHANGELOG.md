@@ -1,5 +1,74 @@
 # Changelog
 
+## 0.10.9
+
+- Add read preference to command operation for replica set (#401)
+- Fix: error variable in connection exception message (#403)
+
+## 0.10.8
+
+- Fixed issue on supporting non ObjectId keys in FindAndModify, PR 400
+
+## 0.10.7
+
+- Added a new connection string parameters.This new parameter is used in case that your connection to Atlas is continuosly closed. It often happens when you have a free or flex cluster and some conncurrent requests. In this case the connection is closed by the server without any specific reason. To avoid this, if you add the "&safeAtlas=true" parameter to the connection string, the driver will serialize the concurrent request, avoiding the disconnection issue. It is obviously a shortcut, but at least it allows you to work.
+
+## 0.10.6
+
+- Lint fixes
+- Refreshed dependencies
+- Fixed issue with ObjectId generation (inherited from BSON package)
+
+## 0.10.5
+
+- Added Cliente Metadata
+- Removed Hello Options class from Hello Command  (Comment parm)
+
+## 0.10.4
+
+- Removed Library names (Lint)
+- Updated Dependencies
+- Changes to Grid Fs to fix problem with files bigger than 2GB (Issue [#385](https://github.com/mongo-dart/mongo_dart/issues/385))
+  1) Changed length in GridFSFile from int? to Int64
+  2) Changed chunkSize in GridFSFile from int to Int32
+  3) Changed GridFS.defaultChunkSize from int to Int32
+  4) Removed Validate() method from GridFSFile (MD5 no more managed)
+
+## 0.10.3
+
+- Fixed case insensitive flag in match operator (it was true instead of false and viceversa)
+
+## 0.10.2
+
+- Change event improvements see [Pull Request #373](https://github.com/mongo-dart/mongo_dart/pull/373)
+
+## 0.10.1
+
+- X509 Authentication
+- LegacyUuid class. It allows to manage Binary Subtype 3 Bson types (Uuid Old). The class holds the value in the storing format, some helpers are available for converting back an forth this value based on the known algorithms: java Legacy, C# legacy and Python.
+
+## 0.10.0
+
+Updated Bson, Mongo_dart_query and Uuid dependencies, this leads to a series of ***Breaking changes***.
+Please, see the respective github pages for details, here a recap of the most noticeable:
+
+- BSON classes are mainly used for internal use. See the Bson github site for more details
+  - BsonRegexp now it is normally not needed, use RegExp instead.
+  - BsonNull is not needed, you can use null directly.
+  - A new JsCode class has been created, it is no more needed the use of BsonCode.
+  - a DbRef class has been created. The old version was storing DbPointer and DbRef the same way. Now they are separated as in Bson specification. If you have old data, please consider this change.
+- Uuid dependency has been updated and you have to consider that the UuidValue class has been slightly changed. The .fromString constructure must be used mainly instead of the default one. Check the Uuid package github site for details.
+
+## 0.9.4
+
+- Example for admin command
+- Fix for listDatabases() method for new releases
+
+## 0.9.3
+
+- Fix on ConnectionPool
+- Test for SetWindowFields (inherited from mongo_dart_query)
+
 ## 0.9.2
 
 - Added extra data parameter to GridIn class
@@ -30,9 +99,9 @@
 
 - inherited fro Bson: Moving to the most recent version of the `Rational` class, a **Breaking change** had been introduced. We have decided to substitute the `Rational` class with the `Decimal` one, because the latter, that it is a wrapper around the former, contains more user friendly methods. You can always get a `Rational` instance, if needed, calling the `toRational()` method of the`Decimal` class.
 - a connection error condition was throwing the natural number "e" instead of the error text
-- connection_pool: _DbFactory renamed DbFactory
-- connection: _ServerCapabilities renamed ServerCapabilities
-- connection_manager: _ConnectionManager renamed ConnectionManager
+- connection_pool: `_DbFactory` renamed `DbFactory`
+- connection: `_ServerCapabilities` renamed `ServerCapabilities`
+- connection_manager: `_ConnectionManager` renamed `ConnectionManager`
 - Lint fixes
 - The folder lib\src\database\commands\aggreagation_commands has bin renamed into lib\src\database\commands\aggregation_commands
 - created `modernCount` method

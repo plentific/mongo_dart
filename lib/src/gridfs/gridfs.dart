@@ -1,7 +1,7 @@
-part of mongo_dart;
+part of '../../mongo_dart.dart';
 
 class GridFS {
-  static int defaultChunkSize = 256 * 1024;
+  static Int32 defaultChunkSize = Int32(256 * 1024);
   static int maxChunkSize = (3.5 * 1000 * 1000).toInt();
 
   Db database;
@@ -19,7 +19,7 @@ class GridFS {
   Stream<Map<String, dynamic>> getFileList(SelectorBuilder selectorBuilder) =>
       files.find(selectorBuilder.sortBy('filename', descending: true));
 
-  Future<GridOut?> findOne(selector) async {
+  Future<GridOut?> findOne(dynamic selector) async {
     //var completer = Completer<GridOut>();
     var file = await files.findOne(selector); //.then((file) {
 

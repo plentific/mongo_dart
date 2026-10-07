@@ -91,15 +91,19 @@ class ModernCursor {
   /// or other read operation has been executed, without generating
   /// an explicit cursor. This way, for getting the extra documents,
   /// we may need a cursor.
-  ModernCursor.fromOpenId(DbCollection collection, this.cursorId,
-      {bool? tailable,
-      bool? awaitData,
-      bool? isChangeStream,
-      bool? checksumPresent,
-      bool? moreToCome,
-      bool? exhaustAllowed})
-      // ignore: prefer_initializing_formals
-      : collection = collection,
+  ModernCursor.fromOpenId(
+    DbCollection collection,
+    this.operation,
+    this.cursorId, {
+    bool? tailable,
+    bool? awaitData,
+    bool? isChangeStream,
+    bool? checksumPresent,
+    bool? moreToCome,
+    bool? exhaustAllowed,
+  })  
+  // ignore: prefer_initializing_formals
+  : collection = collection,
         collectionName = collection.collectionName,
         tailable = tailable ?? false,
         awaitData = awaitData ?? false,
@@ -118,7 +122,7 @@ class ModernCursor {
   State state = State.init;
   Int64 cursorId = Int64.ZERO; //BsonLong(0);
   late Db db;
-  Queue<Map<String, Object?>> items = Queue<Map<String, Object?>>();
+  Queue<Map<String, dynamic>> items = Queue<Map<String, dynamic>>();
   DbCollection? collection;
   bool tailable = false;
   bool awaitData = false;
@@ -156,21 +160,21 @@ class ModernCursor {
 
   /// The operation to be executed.
   /// It must be an operation that returns a cursorId, like find, getMore, etc.
-  OperationBase? operation;
+  OperationBase operation;
 
   /// Specify the milliseconds between getMore on tailable cursor,
   /// only applicable when awaitData isn't set.
   /// Default value is 100 ms
   int tailableRetryInterval = 100;
 
-  Map<String, Object?>? _getNextItem() => items.removeFirst();
+  Map<String, dynamic>? _getNextItem() => items.removeFirst();
 
-  void extractCursorData(Map<String, Object?> operationReturnMap) {
+  void extractCursorData(Map<String, dynamic> operationReturnMap) {
     if (operationReturnMap[keyCursor] == null) {
       throw MongoDartError('The operation type ${operation.runtimeType} '
           'does not return a cursor');
     }
-    var cursorMap = operationReturnMap[keyCursor] as Map<String, Object?>?;
+    var cursorMap = operationReturnMap[keyCursor] as Map<String, dynamic>?;
     if (cursorMap == null) {
       throw MongoDartError('No cursor returned');
     }
@@ -180,14 +184,14 @@ class ModernCursor {
       nsParts.removeAt(0);
       collectionName = nsParts.join('.');
     }
-    List<Map<String, Object?>> documents;
+    List<Map<String, dynamic>> documents;
     if (cursorMap[keyNextBatch] != null && cursorMap[keyNextBatch] is List) {
-      documents = <Map<String, Object?>>[...cursorMap[keyNextBatch] as List];
+      documents = <Map<String, dynamic>>[...cursorMap[keyNextBatch] as List];
     } else if (cursorMap[keyFirstBatch] != null &&
         cursorMap[keyFirstBatch] is List) {
-      documents = <Map<String, Object?>>[...cursorMap[keyFirstBatch] as List];
+      documents = <Map<String, dynamic>>[...cursorMap[keyFirstBatch] as List];
     } else {
-      documents = <Map<String, Object?>>[];
+      documents = <Map<String, dynamic>>[];
     }
 
     for (var doc in documents) {
@@ -209,41 +213,45 @@ class ModernCursor {
   /// await nextObject();
   /// await close();
   /// ```
-  Future<Map<String, Object?>?> onlyFirst() async {
+  Future<Map<String, dynamic>?> onlyFirst() async {
     var ret = await nextObject();
     await close();
     return ret;
   }
 
-  Future<Map<String, Object?>?> nextObject() async {
+  Future<Map<String, dynamic>?> nextObject() async {
     if (items.isNotEmpty) {
       return _getNextItem();
     }
     if (collection != null &&
         collection!.collectionName == r'$cmd' &&
         operation is FindOperation &&
-        (operation! as FindOperation).limit == 1) {
-      return operation!.execute();
+        (operation as FindOperation).limit == 1) {
+      return operation.execute();
     }
 
     var justPrepareCursor = false;
-    Map<String, Object?>? result;
-    if (state == State.init && operation != null) {
-      if (operation!.options[keyBatchSize] != null &&
-          operation!.options[keyBatchSize] == 0) {
+    Map<String, dynamic>? result;
+    if (state == State.init) {
+      if (operation.options[keyBatchSize] != null &&
+          operation.options[keyBatchSize] == 0) {
         justPrepareCursor = true;
       }
-      result = await operation!.execute();
+      result = await operation.execute();
       state = State.open;
     } else if (state == State.open) {
       if (cursorId == Int64.ZERO) {
         await _serverSideCursorClose();
         return null;
       }
-      var command = GetMoreCommand(collection, cursorId,
-          db: db,
-          collectionName: collectionName,
-          getMoreOptions: GetMoreOptions(batchSize: _batchSize));
+      var command = GetMoreCommand(
+        collection,
+        cursorId,
+        db: db,
+        collectionName: collectionName,
+        getMoreOptions: GetMoreOptions(batchSize: _batchSize),
+        connection: operation.connection,
+      );
       result = await command.execute();
     }
     if (result == null) {
@@ -299,9 +307,9 @@ class ModernCursor {
     return;
   }
 
-  Stream<Map<String, Object?>> get stream {
+  Stream<Map<String, dynamic>> get stream {
     var paused = true;
-    var controller = StreamController<Map<String, Object?>>();
+    var controller = StreamController<Map<String, dynamic>>();
 
     Future<void> readNext() async {
       try {

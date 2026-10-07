@@ -32,7 +32,7 @@ class FindOperation extends CommandOperation {
 
   /// Optional. The query predicate. If unspecified, then all documents in the
   /// collection will match the predicate.
-  Map<String, Object?>? filter;
+  Map<String, dynamic>? filter;
 
   /// Optional. The sort specification for the ordering of the results.
   Map<String, Object>? sort;
@@ -95,6 +95,8 @@ class FindOperation extends CommandOperation {
         keyHint: hintDocument!,
       if (skip != null && skip! > 0) keySkip: skip!,
       if (limit != null && limit! > 0) keyLimit: limit!,
+      if (readPreference != null)
+        r'$keyReadPreference': readPreference!.mode.name,
     };
   }
 

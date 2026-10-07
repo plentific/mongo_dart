@@ -20,7 +20,7 @@ import 'package:mongo_dart/src/database/utils/map_keys.dart';
 /// replica set members and to discover additional members of a replica set.
 
 class HelloResult with BasicResult {
-  HelloResult(Map<String, Object?> document)
+  HelloResult(Map<String, dynamic> document)
       : isWritablePrimary = document[keyIsWritablePrimary] as bool? ?? false,
         maxBsonObjectSize =
             document[keyMaxBsonObjectSize] as int? ?? 16 * 1024 * 1024,
@@ -28,7 +28,8 @@ class HelloResult with BasicResult {
             document[keyMaxMessageSizeBytes] as int? ?? 48000000,
         maxWriteBatchSize = document[keyMaxWriteBatchSize] as int? ?? 100000,
         localTime = document[keyLocalTime] as DateTime,
-        logicalSessionTimeoutMinutes = document[keyLogicalSessionTimeoutMinutes] as int? ?? 10,
+        logicalSessionTimeoutMinutes =
+            document[keyLogicalSessionTimeoutMinutes] as int?,
         minWireVersion = document[keyMinWireVersion] as int,
         maxWireVersion = document[keyMaxWireVersion] as int,
         readOnly = document[keyReadOnly] as bool? ?? false {
@@ -67,7 +68,10 @@ class HelloResult with BasicResult {
     me = document[keyMe] as String?;
     electionId = document[keyElectionId] as ObjectId?;
     lastWrite = document[keyLastWrite] as Map?;
+    serviceId = document[keyServiceId] as ObjectId?;
   }
+
+  bool get isLoadBalanced => serviceId != null;
 
   // ***** INSTANCE INFORMATION ******
   /// A boolean value that reports when this node is writable.
@@ -104,7 +108,10 @@ class HelloResult with BasicResult {
   /// from the client or been refreshed with refreshSessions within this
   ///  threshold are cleared from the cache. State associated with an expired
   /// session may be cleaned up by the server at any time.
-  int logicalSessionTimeoutMinutes;
+  ///
+  /// Null when the server does not support sessions and leaves the field
+  /// out of its reply, as Amazon DocumentDB 3.6 does.
+  int? logicalSessionTimeoutMinutes;
 
   /// An identifier for the mongod/mongos instance's outgoing
   /// connection to the client.
@@ -248,4 +255,8 @@ class HelloResult with BasicResult {
   /// For details on the ok status field, the operationTime field, and the
   /// $clusterTime field, see Command Response.
   Map? lastWrite;
+
+  /// A Service Identifier when theserver is in Load Balancing Mode.
+  /// Null oterwise.
+  ObjectId? serviceId;
 }

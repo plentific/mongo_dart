@@ -1,5 +1,5 @@
 @Timeout(Duration(minutes: 10))
-library database_tests;
+library;
 
 import 'package:fixnum/fixnum.dart';
 import 'package:mongo_dart/mongo_dart.dart';
@@ -9,6 +9,7 @@ import 'package:mongo_dart/src/database/commands/diagnostic_commands/ping_comman
 import 'package:mongo_dart/src/database/cursor/modern_cursor.dart';
 import 'dart:async';
 import 'package:test/test.dart';
+import 'package:uuid/uuid.dart';
 
 const dbName = 'test-mongo-dart';
 const dbAddress = '127.0.0.1';
@@ -157,6 +158,7 @@ Future testGetNonce() async {
       db.masterConnection.serverCapabilities.fcv!.compareTo('6.0') >= 0) {
     return;
   }
+  // ignore: deprecated_member_use_from_same_package
   var result = await db.getNonce();
   expect(result['ok'], 1);
 }
@@ -1654,7 +1656,7 @@ Future testSimpleQuery() async {
   }
   expect(result1['my_field'], 3);
   id = result1['_id'] as ObjectId;
-  expect(id.toHexString(), id.$oid);
+  expect(id.oid, id.oid);
 
   var result2 = await collection.findOne(where.id(id));
   expect(result2, isNotNull);
@@ -1813,6 +1815,7 @@ Future testFindOneWhileStateIsOpening() async {
     // ignore: unawaited_futures
     db.open().then((_) {
       return db.collection(collectionName).findOne();
+      // ignore: unawaited_futures
     }).then((res) {
       expect(res, isNull);
       db.close();

@@ -1,7 +1,9 @@
 @Timeout(Duration(seconds: 100))
+library;
 
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:test/test.dart';
+import 'package:uuid/uuid.dart';
 
 const dbName = 'test';
 const dbAddress = '127.0.0.1';
